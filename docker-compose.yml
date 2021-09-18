@@ -1,0 +1,56 @@
+version: "3"
+services:
+    pihole:
+        container_name: pihole
+        image: pihole/pihole:latest
+        ports:
+            - 53:53/tcp
+            - 53:53/udp
+            - 67:67/udp
+            - 80:80/tcp
+            - 4433:443/tcp
+        volumes:
+            - ./pihole/etc-pihole/:/etc/pihole
+            - ./pihole/etc-dnsmasq.d/:/etc/dnsmasq.d
+        environment:
+            - TZ=Europe/Rome
+        dns:
+            - 127.0.0.1
+            - 1.1.1.1
+        cap_add:
+            - NET_ADMIN
+        restart: unless-stopped
+
+    transmission:
+        container_name: transmission-openvpn
+        image: haugene/transmission-openvpn:latest
+        ports:
+            - 9091:9091
+            - 9999:51413
+            - 9999:51413/udp
+        volumes:
+            - ./transmission/config:/config
+            - ./transmission/downloads:/downloads
+            - ./transmission/watch:/watch
+        environment:
+            - PGID=1000
+            - PUID=1000
+            - TRANSMISSION_WEB_UI=flood-for-transmission
+        cap_add:
+            - NET_ADMIN
+        restart: unless-stopped
+
+    portainer:
+        container_name: portainer
+        image: portainer/portainer
+        ports:
+            - 9000:9000
+            - 8000:8000
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - portainer_data:/data
+        command: -H unix:///var/run/docker.sock
+        restart: always
+        
+volumes:
+    portainer_data:
