@@ -7,7 +7,7 @@ services:
             - 53:53/tcp
             - 53:53/udp
             - 67:67/udp
-            - 80:80/tcp
+            - 8080:80/tcp
             - 4433:443/tcp
         volumes:
             - ./pihole/etc-pihole/:/etc/pihole
@@ -20,7 +20,6 @@ services:
         cap_add:
             - NET_ADMIN
         restart: unless-stopped
-
     transmission:
         container_name: transmission-openvpn
         image: haugene/transmission-openvpn:latest
@@ -32,25 +31,45 @@ services:
             - ./transmission/config:/config
             - ./transmission/downloads:/downloads
             - ./transmission/watch:/watch
+            - ./transmission:/data
+            - /mount/ddisk:/media/ddisk
         environment:
             - PGID=1000
             - PUID=1000
             - TRANSMISSION_WEB_UI=flood-for-transmission
+            - OPENVPN_PROVIDER=NORDVPN
+            - OPENVPN_USERNAME=CHANGE_ME
+            - OPENVPN_PASSWORD=CHANGE_ME
+            - LOCAL_NETWORK=192.168.1.0/24
+            - NORDVPN_COUNTRY=NL
+            - NORDVPN_CATEGORY=legacy_p2p
+            - NORDVPN_PROTOCOL=tcp
+        logging:
+            driver: json-file
+            options:
+                max-size: 10m
         cap_add:
             - NET_ADMIN
         restart: unless-stopped
-
     portainer:
-        container_name: portainer
-        image: portainer/portainer
+        container_name: portainer-ce
+        image: portainer/portainer-ce:latest
         ports:
             - 9000:9000
+            - 9443:9443
             - 8000:8000
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
             - portainer_data:/data
         command: -H unix:///var/run/docker.sock
         restart: always
-        
+    homer:
+        container_name: management-panel
+        image: b4bz/homer:latest
+        ports: 
+            - 80:8080/tcp
+        volumes:
+            - ./homer:/www/assets
+        restart: always
 volumes:
     portainer_data:
